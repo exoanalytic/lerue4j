@@ -14,6 +14,11 @@ public class ListEndpoint {
 	private String authToken;
 	private String authId;
 	
+	/**
+	 * @param authId your API Auth ID from Smarty Streets
+	 * @param authToken your Auth Token from Smarty Streets
+	 * @throws URISyntaxException
+	 */
 	public ListEndpoint(String authId, String authToken) throws URISyntaxException {
 		this.authId = authId;
 		this.authToken = authToken;
