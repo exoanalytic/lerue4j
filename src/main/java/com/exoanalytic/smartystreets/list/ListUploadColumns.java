@@ -18,4 +18,12 @@ public enum ListUploadColumns {
 	FirstName,
 	LastName,
 	Organization;
+
+	/**
+	 * Returns the field as it appears in the result files.
+	 * @return
+	 */
+	public String inResult() {
+		return "[" + this + "]";
+	}
 }
