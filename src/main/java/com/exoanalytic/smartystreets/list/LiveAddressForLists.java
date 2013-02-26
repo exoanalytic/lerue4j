@@ -2,6 +2,7 @@ package com.exoanalytic.smartystreets.list;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,11 +37,12 @@ public class LiveAddressForLists {
 	 * Submits a list of addresses to be cleaned
 	 * @param file contains the addresses to be cleaned
 	 * @return a response object used subsequently to check status and retrieve results
+	 * @throws LiveAddressForListsException 
 	 * @throws URISyntaxException
 	 * @throws ClientProtocolException
 	 * @throws IOException
 	 */
-	public SubmissionResponse submitList(File file) throws URISyntaxException, ClientProtocolException, IOException {
+	public SubmissionResponse submitList(File file) throws LiveAddressForListsException {
 		HttpClient httpclient = new DefaultHttpClient();
         try {
             HttpPost httppost = new HttpPost(endpoint.constructListSubmissionUrl(file.getName()));
@@ -57,11 +59,21 @@ public class LiveAddressForLists {
             HttpResponse response = httpclient.execute(httppost);
             HttpEntity resEntity = response.getEntity();
             String jsonResponse = convertStreamToString(resEntity.getContent());
-            SubmissionResponse listResponse = interpretResponse(jsonResponse);
+            SubmissionResponse listResponse = interpretSubmissionResponse(jsonResponse);
             
             EntityUtils.consume(resEntity);
             return listResponse;
-        } finally {
+        } catch (FileNotFoundException e) {
+			throw new LiveAddressForListsException(e);
+		} catch (ClientProtocolException e) {
+			throw new LiveAddressForListsException(e);
+		} catch (IOException e) {
+			throw new LiveAddressForListsException(e);
+		} catch (LiveAddressForListsException e) {
+			throw new LiveAddressForListsException(e);
+		} catch (URISyntaxException e) {
+			throw new LiveAddressForListsException(e);
+		} finally {
             httpclient.getConnectionManager().shutdown();
         }
 	}
@@ -70,11 +82,12 @@ public class LiveAddressForLists {
 	 * Checks the status of a list already submitted
 	 * @param listResponse the response from the original list submission
 	 * @return the status response
+	 * @throws LiveAddressForListsException 
 	 * @throws ClientProtocolException
 	 * @throws IOException
 	 * @throws URISyntaxException
 	 */
-	public StatusResponse checkStatus(SubmissionResponse listResponse) throws ClientProtocolException, IOException, URISyntaxException {
+	public StatusResponse checkStatus(SubmissionResponse listResponse) throws LiveAddressForListsException {
 		HttpClient httpclient = new DefaultHttpClient();
         try {
             HttpGet httpget = new HttpGet(endpoint.constructListStatusUrl(listResponse.list_id));
@@ -86,7 +99,11 @@ public class LiveAddressForLists {
             
             EntityUtils.consume(resEntity);
             return statusResponse;
-        } finally {
+        } catch (URISyntaxException e) {
+        	throw new LiveAddressForListsException(e);
+		} catch (IOException e) {
+			throw new LiveAddressForListsException(e);
+		} finally {
             httpclient.getConnectionManager().shutdown();
         }
 	}
@@ -110,12 +127,18 @@ public class LiveAddressForLists {
         }
 	}
 	
-	SubmissionResponse interpretResponse(String jsonResponse) {
-        return new Gson().fromJson(jsonResponse, SubmissionResponse.class);		
+	SubmissionResponse interpretSubmissionResponse(String jsonResponse) throws LiveAddressForListsException {
+		SubmissionResponse sr = new Gson().fromJson(jsonResponse, SubmissionResponse.class);
+		if (sr != null)
+			return sr;
+		else throw new LiveAddressForListsException("Could not interpret submission response: " + jsonResponse);
 	}
 	
-	StatusResponse interpretStatusResponse(String jsonResponse) {
-		return new Gson().fromJson(jsonResponse, StatusResponse.class);
+	StatusResponse interpretStatusResponse(String jsonResponse) throws LiveAddressForListsException {
+		StatusResponse sr = new Gson().fromJson(jsonResponse, StatusResponse.class); 
+		if (sr != null)
+			return sr;
+		else throw new LiveAddressForListsException("Could not interpret status response: " + jsonResponse);
 	}
 	
 	/**

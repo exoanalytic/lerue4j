@@ -13,7 +13,7 @@ import java.net.URISyntaxException;
  *
  */
 public class Main {
-	public static void main(String[] args) throws IOException, URISyntaxException, InterruptedException {
+	public static void main(String[] args) throws IOException, URISyntaxException, InterruptedException, LiveAddressForListsException {
 		String authId = promptForInfo("Enter your SmartyStreets auth id");
 		String authToken = promptForInfo("Enter your SmartyStreets auth token");
 		
